@@ -3,12 +3,13 @@ package main
 import (
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/unrolled/render"
-
 	"github.com/FerVT/movies/config"
 	"github.com/FerVT/movies/controller"
 	"github.com/FerVT/movies/router"
+	"github.com/FerVT/movies/usecase"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/unrolled/render"
 )
 
 func main() {
@@ -20,7 +21,9 @@ func main() {
 		return
 	}
 
-	moviesController := controller.NewMovies(renderer)
+	moviesUsecase := usecase.NewMovies()
+
+	moviesController := controller.NewMovies(renderer, moviesUsecase)
 
 	appRouter := router.GetRouter(moviesController)
 

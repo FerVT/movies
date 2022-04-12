@@ -1,7 +1,11 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
+
+	"github.com/FerVT/movies/model"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -9,39 +13,76 @@ import (
 )
 
 type Movies struct {
-	render *render.Render
+	render  *render.Render
+	usecase moviesUsecase
 }
 
-func NewMovies(render *render.Render) *Movies {
+type moviesUsecase interface {
+	GetAllMovies() ([]*model.Movie, error)
+	GetMovie(movieId string) (*model.Movie, error)
+}
+
+func NewMovies(r *render.Render, u moviesUsecase) *Movies {
 	return &Movies{
-		render: render,
+		render:  r,
+		usecase: u,
 	}
 }
 
 func (c *Movies) GetAllMovies(w http.ResponseWriter, req *http.Request) {
 	log.Info("get all movies controller")
 
-	c.render.Text(w, http.StatusOK, "Here are your movies m8")
+	movies, err := c.usecase.GetAllMovies()
+	if err != nil {
+		log.Error(err)
+
+		c.render.Text(w, http.StatusInternalServerError, "unexpected error fetching movies")
+		return
+	}
+
+	if len(movies) == 0 {
+		log.Info("movies not found")
+
+		c.render.Text(w, http.StatusNotFound, "movies not found")
+		return
+	}
+
+	c.render.JSON(w, http.StatusOK, movies)
 }
 
 func (c *Movies) GetMovie(w http.ResponseWriter, req *http.Request) {
 	log.Info("get movie controller")
 
 	movieID := mux.Vars(req)["id"]
+	if strings.TrimSpace(movieID) == "" {
+		log.Info("invalid movieID param")
 
-	c.render.Text(w, http.StatusOK, "Here is your movie m8: "+movieID)
+		c.render.Text(w, http.StatusBadRequest, "invalid id param")
+		return
+	}
+
+	movie, err := c.usecase.GetMovie(movieID)
+	if err != nil {
+		log.Error(err)
+
+		c.render.Text(w, http.StatusInternalServerError, "unexpected error fetching movie")
+		return
+	}
+
+	if movie == nil {
+		log.Info(fmt.Sprintf("movie not found: %s", movieID))
+
+		c.render.Text(w, http.StatusNotFound, "movie not found")
+		return
+	}
+
+	c.render.JSON(w, http.StatusOK, movie)
 }
 
 func (c *Movies) CreateMovies(w http.ResponseWriter, req *http.Request) {
 	log.Info("create movies controller")
 
 	c.render.Text(w, http.StatusCreated, "Movies created fam")
-}
-
-func (c *Movies) UpdateMovies(w http.ResponseWriter, req *http.Request) {
-	log.Info("update movies controller")
-
-	c.render.Text(w, http.StatusCreated, "Movies updated fam")
 }
 
 func (c *Movies) DeleteMovies(w http.ResponseWriter, req *http.Request) {
