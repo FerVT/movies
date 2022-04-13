@@ -6,6 +6,7 @@ import (
 	"github.com/FerVT/movies/config"
 	"github.com/FerVT/movies/controller"
 	"github.com/FerVT/movies/router"
+	"github.com/FerVT/movies/service/ddb"
 	"github.com/FerVT/movies/usecase"
 
 	log "github.com/sirupsen/logrus"
@@ -21,7 +22,13 @@ func main() {
 		return
 	}
 
-	moviesUsecase := usecase.NewMovies()
+	moviesDB, err := ddb.NewMovies(appConfig)
+	if err != nil {
+		log.Fatal("error setting up ddb connection: ", err)
+		return
+	}
+
+	moviesUsecase := usecase.NewMovies(moviesDB)
 
 	moviesController := controller.NewMovies(renderer, moviesUsecase)
 

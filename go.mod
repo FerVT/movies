@@ -9,6 +9,8 @@ require (
 )
 
 require (
+	github.com/aws/aws-sdk-go v1.43.39 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 )

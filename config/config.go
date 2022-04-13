@@ -7,7 +7,13 @@ import (
 )
 
 type Config struct {
-	AppPort string `json:"appPort"`
+	AppPort         string `json:"appPort"`
+	AWSID           string `json:"awsID"`
+	AWSSecret       string `json:"awsSecret"`
+	AWSToken        string `json:"awsToken"`
+	AWSHost         string `json:"awsHost"`
+	AWSRegion       string `json:"awsRegion"`
+	MoviesTableName string `json:"moviesTableName"`
 }
 
 func GetConfig(configFilePath string) (*Config, error) {

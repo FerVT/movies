@@ -1,3 +1,9 @@
 {
-    "appPort": "8080"
+    "appPort": "8080",
+    "awsID": "id",
+    "awsSecret": "secret",
+    "awsToken": "token",
+    "awsHost": "host",
+    "awsRegion": "region",
+    "moviesTableName": "tableName"
 }
