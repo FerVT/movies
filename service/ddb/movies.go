@@ -1,6 +1,8 @@
 package ddb
 
 import (
+	"fmt"
+
 	"github.com/FerVT/movies/model"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -19,19 +21,19 @@ func (db *movies) GetAllMovies() ([]*model.Movie, error) {
 
 	scanOutput, err := db.client.Scan(scanInput)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ddb.GetAllMovies(): %w", err)
 	}
 
 	var movies []*model.Movie
 	err = dynamodbattribute.UnmarshalListOfMaps(scanOutput.Items, &movies)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ddb.GetAllMovies(): %w", err)
 	}
 
 	return movies, nil
 }
 
-func (db *movies) GetMovieByID(movieId string) (*model.Movie, error) {
+func (db *movies) GetMovieById(movieId string) (*model.Movie, error) {
 	getItemInput := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			idKey: {
@@ -43,7 +45,7 @@ func (db *movies) GetMovieByID(movieId string) (*model.Movie, error) {
 
 	getItemOutput, err := db.client.GetItem(getItemInput)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ddb.GetMovieById(): %w", err)
 	}
 
 	if len(getItemOutput.Item) == 0 {
@@ -53,7 +55,7 @@ func (db *movies) GetMovieByID(movieId string) (*model.Movie, error) {
 	var movie *model.Movie
 	err = dynamodbattribute.UnmarshalMap(getItemOutput.Item, &movie)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ddb.GetMovieById(): %w", err)
 	}
 
 	return movie, nil
@@ -65,7 +67,7 @@ func (db *movies) CreateMovies(movies []*model.Movie) ([]*model.Movie, error) {
 	for i, m := range movies {
 		movieMap, err := dynamodbattribute.MarshalMap(m)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("ddb.CreateMovies(): %w", err)
 		}
 
 		writeRequests[i] = &dynamodb.WriteRequest{
@@ -83,7 +85,7 @@ func (db *movies) CreateMovies(movies []*model.Movie) ([]*model.Movie, error) {
 
 	_, err := db.client.BatchWriteItem(batchWriteItemInput)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ddb.CreateMovies(): %w", err)
 	}
 
 	return movies, nil
@@ -112,7 +114,7 @@ func (db *movies) DeleteMoviesByIds(moviesIds []string) error {
 
 	_, err := db.client.BatchWriteItem(batchWriteItemInput)
 	if err != nil {
-		return err
+		return fmt.Errorf("ddb.DeleteMoviesByIds(): %w", err)
 	}
 
 	return nil

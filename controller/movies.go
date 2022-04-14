@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/FerVT/movies/model"
 
@@ -33,11 +34,24 @@ func NewMovies(r *render.Render, u moviesUsecase) *movies {
 }
 
 func (c *movies) GetAllMovies(w http.ResponseWriter, req *http.Request) {
-	log.Info("get all movies controller")
+	log.WithFields(
+		log.Fields{
+			"handler": "GetAllMovies",
+			"time":    time.Now().Unix(),
+		},
+	).Info("handler started")
+	defer func() {
+		log.WithFields(
+			log.Fields{
+				"handler": "GetAllMovies",
+				"time":    time.Now().Unix(),
+			},
+		).Info("handler finished")
+	}()
 
 	movies, err := c.usecase.GetAllMovies()
 	if err != nil {
-		log.Error(err)
+		log.Error(fmt.Errorf("controller.GetAllMovies(): %w", err))
 
 		c.render.Text(w, http.StatusInternalServerError, "unexpected error fetching movies")
 		return
@@ -54,7 +68,20 @@ func (c *movies) GetAllMovies(w http.ResponseWriter, req *http.Request) {
 }
 
 func (c *movies) GetMovie(w http.ResponseWriter, req *http.Request) {
-	log.Info("get movie controller")
+	log.WithFields(
+		log.Fields{
+			"handler": "GetMovie",
+			"time":    time.Now().Unix(),
+		},
+	).Info("handler started")
+	defer func() {
+		log.WithFields(
+			log.Fields{
+				"handler": "GetMovie",
+				"time":    time.Now().Unix(),
+			},
+		).Info("handler finished")
+	}()
 
 	movieID := mux.Vars(req)["id"]
 	if strings.TrimSpace(movieID) == "" {
@@ -66,14 +93,14 @@ func (c *movies) GetMovie(w http.ResponseWriter, req *http.Request) {
 
 	movie, err := c.usecase.GetMovie(movieID)
 	if err != nil {
-		log.Error(err)
+		log.Error(fmt.Errorf("controller.GetMovie(): %w", err))
 
 		c.render.Text(w, http.StatusInternalServerError, "unexpected error fetching movie")
 		return
 	}
 
 	if movie == nil {
-		log.Info(fmt.Sprintf("movie not found: %s", movieID))
+		log.WithField("movieId", movieID).Info("movie not found")
 
 		c.render.Text(w, http.StatusNotFound, "movie not found")
 		return
@@ -83,12 +110,25 @@ func (c *movies) GetMovie(w http.ResponseWriter, req *http.Request) {
 }
 
 func (c *movies) CreateMovies(w http.ResponseWriter, req *http.Request) {
-	log.Info("create movies controller")
+	log.WithFields(
+		log.Fields{
+			"handler": "CreateMovies",
+			"time":    time.Now().Unix(),
+		},
+	).Info("handler started")
+	defer func() {
+		log.WithFields(
+			log.Fields{
+				"handler": "CreateMovies",
+				"time":    time.Now().Unix(),
+			},
+		).Info("handler finished")
+	}()
 
 	var movies []*model.Movie
 	err := json.NewDecoder(req.Body).Decode(&movies)
 	if err != nil {
-		log.Error(err)
+		log.Error(fmt.Errorf("controller.CreateMovies(): %w", err))
 
 		c.render.Text(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -97,7 +137,7 @@ func (c *movies) CreateMovies(w http.ResponseWriter, req *http.Request) {
 	for _, m := range movies {
 		err = m.ValidateFields()
 		if err != nil {
-			log.Error(err)
+			log.Error(fmt.Errorf("controller.CreateMovies(): %w", err))
 
 			c.render.Text(w, http.StatusBadRequest, "invalid request body: "+err.Error())
 			return
@@ -106,7 +146,7 @@ func (c *movies) CreateMovies(w http.ResponseWriter, req *http.Request) {
 
 	movies, err = c.usecase.CreateMovies(movies)
 	if err != nil {
-		log.Error(err)
+		log.Error(fmt.Errorf("controller.CreateMovies(): %w", err))
 
 		c.render.Text(w, http.StatusInternalServerError, "unexpected error creating movies")
 		return
@@ -116,7 +156,20 @@ func (c *movies) CreateMovies(w http.ResponseWriter, req *http.Request) {
 }
 
 func (c *movies) DeleteMovies(w http.ResponseWriter, req *http.Request) {
-	log.Info("delete movies controller")
+	log.WithFields(
+		log.Fields{
+			"handler": "DeleteMovies",
+			"time":    time.Now().Unix(),
+		},
+	).Info("handler started")
+	defer func() {
+		log.WithFields(
+			log.Fields{
+				"handler": "DeleteMovies",
+				"time":    time.Now().Unix(),
+			},
+		).Info("handler finished")
+	}()
 
 	ids := strings.Split(mux.Vars(req)["ids"], ",")
 	if len(ids) == 0 {
@@ -137,7 +190,7 @@ func (c *movies) DeleteMovies(w http.ResponseWriter, req *http.Request) {
 
 	err := c.usecase.DeleteMovies(ids)
 	if err != nil {
-		log.Error(err)
+		log.Error(fmt.Errorf("controller.DeleteMovies(): %w", err))
 
 		c.render.Text(w, http.StatusInternalServerError, "unexpected error deleting movies")
 		return

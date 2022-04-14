@@ -18,13 +18,13 @@ func main() {
 
 	appConfig, err := config.GetConfig("config.json")
 	if err != nil {
-		log.Fatal("error loading configuration: ", err)
+		log.Fatal("main(): ", err)
 		return
 	}
 
 	moviesDB, err := ddb.NewMovies(appConfig)
 	if err != nil {
-		log.Fatal("error setting up ddb connection: ", err)
+		log.Fatal("main(): ", err)
 		return
 	}
 

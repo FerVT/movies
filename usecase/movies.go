@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"fmt"
+
 	"github.com/FerVT/movies/model"
 
 	"github.com/google/uuid"
@@ -11,7 +13,7 @@ type movies struct {
 }
 
 type moviesDB interface {
-	GetMovieByID(movieId string) (*model.Movie, error)
+	GetMovieById(movieId string) (*model.Movie, error)
 	GetAllMovies() ([]*model.Movie, error)
 	CreateMovies(movies []*model.Movie) ([]*model.Movie, error)
 	DeleteMoviesByIds(moviesIds []string) error
@@ -22,11 +24,21 @@ func NewMovies(mDB moviesDB) *movies {
 }
 
 func (u *movies) GetAllMovies() ([]*model.Movie, error) {
-	return u.moviesDB.GetAllMovies()
+	movies, err := u.moviesDB.GetAllMovies()
+	if err != nil {
+		return nil, fmt.Errorf("usecase.GetAllMovies(): %w", err)
+	}
+
+	return movies, nil
 }
 
 func (u *movies) GetMovie(movieId string) (*model.Movie, error) {
-	return u.moviesDB.GetMovieByID(movieId)
+	movie, err := u.moviesDB.GetMovieById(movieId)
+	if err != nil {
+		return nil, fmt.Errorf("usecase.GetMovie(): %w", err)
+	}
+
+	return movie, nil
 }
 
 func (u *movies) CreateMovies(movies []*model.Movie) ([]*model.Movie, error) {
@@ -34,9 +46,19 @@ func (u *movies) CreateMovies(movies []*model.Movie) ([]*model.Movie, error) {
 		m.ID = uuid.NewString()
 	}
 
-	return u.moviesDB.CreateMovies(movies)
+	movies, err := u.moviesDB.CreateMovies(movies)
+	if err != nil {
+		return nil, fmt.Errorf("usecase.CreateMovies(): %w", err)
+	}
+
+	return movies, nil
 }
 
 func (u *movies) DeleteMovies(moviesIds []string) error {
-	return u.moviesDB.DeleteMoviesByIds(moviesIds)
+	err := u.moviesDB.DeleteMoviesByIds(moviesIds)
+	if err != nil {
+		return fmt.Errorf("usecase.DeleteMovies(): %w", err)
+	}
+
+	return nil
 }

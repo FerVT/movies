@@ -1,6 +1,8 @@
 package ddb
 
 import (
+	"fmt"
+
 	"github.com/FerVT/movies/config"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -28,7 +30,7 @@ func NewMovies(cfg *config.Config) (*movies, error) {
 		Credentials: credentials.NewStaticCredentials(cfg.AWSID, cfg.AWSSecret, cfg.AWSToken),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ddb.NewMovies(): %w", err)
 	}
 
 	moviesDB := &movies{
@@ -38,7 +40,7 @@ func NewMovies(cfg *config.Config) (*movies, error) {
 
 	err = moviesDB.testConnection()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ddb.NewMovies(): %w", err)
 	}
 
 	return moviesDB, nil
@@ -50,5 +52,9 @@ func (db *movies) testConnection() error {
 	}
 
 	_, err := db.client.DescribeTable(req)
-	return err
+	if err != nil {
+		return fmt.Errorf("ddb.testConnection(): %w", err)
+	}
+
+	return nil
 }
