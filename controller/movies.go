@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,7 +13,7 @@ import (
 	"github.com/unrolled/render"
 )
 
-type Movies struct {
+type movies struct {
 	render  *render.Render
 	usecase moviesUsecase
 }
@@ -20,16 +21,18 @@ type Movies struct {
 type moviesUsecase interface {
 	GetAllMovies() ([]*model.Movie, error)
 	GetMovie(movieId string) (*model.Movie, error)
+	CreateMovies(movies []*model.Movie) ([]*model.Movie, error)
+	DeleteMovies(moviesIds []string) error
 }
 
-func NewMovies(r *render.Render, u moviesUsecase) *Movies {
-	return &Movies{
+func NewMovies(r *render.Render, u moviesUsecase) *movies {
+	return &movies{
 		render:  r,
 		usecase: u,
 	}
 }
 
-func (c *Movies) GetAllMovies(w http.ResponseWriter, req *http.Request) {
+func (c *movies) GetAllMovies(w http.ResponseWriter, req *http.Request) {
 	log.Info("get all movies controller")
 
 	movies, err := c.usecase.GetAllMovies()
@@ -50,7 +53,7 @@ func (c *Movies) GetAllMovies(w http.ResponseWriter, req *http.Request) {
 	c.render.JSON(w, http.StatusOK, movies)
 }
 
-func (c *Movies) GetMovie(w http.ResponseWriter, req *http.Request) {
+func (c *movies) GetMovie(w http.ResponseWriter, req *http.Request) {
 	log.Info("get movie controller")
 
 	movieID := mux.Vars(req)["id"]
@@ -79,14 +82,66 @@ func (c *Movies) GetMovie(w http.ResponseWriter, req *http.Request) {
 	c.render.JSON(w, http.StatusOK, movie)
 }
 
-func (c *Movies) CreateMovies(w http.ResponseWriter, req *http.Request) {
+func (c *movies) CreateMovies(w http.ResponseWriter, req *http.Request) {
 	log.Info("create movies controller")
 
-	c.render.Text(w, http.StatusCreated, "Movies created fam")
+	var movies []*model.Movie
+	err := json.NewDecoder(req.Body).Decode(&movies)
+	if err != nil {
+		log.Error(err)
+
+		c.render.Text(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	for _, m := range movies {
+		err = m.ValidateFields()
+		if err != nil {
+			log.Error(err)
+
+			c.render.Text(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+			return
+		}
+	}
+
+	movies, err = c.usecase.CreateMovies(movies)
+	if err != nil {
+		log.Error(err)
+
+		c.render.Text(w, http.StatusInternalServerError, "unexpected error creating movies")
+		return
+	}
+
+	c.render.JSON(w, http.StatusCreated, movies)
 }
 
-func (c *Movies) DeleteMovies(w http.ResponseWriter, req *http.Request) {
+func (c *movies) DeleteMovies(w http.ResponseWriter, req *http.Request) {
 	log.Info("delete movies controller")
+
+	ids := strings.Split(mux.Vars(req)["ids"], ",")
+	if len(ids) == 0 {
+		log.Info("empty ids list to delete")
+
+		c.render.Text(w, http.StatusNoContent, "")
+		return
+	}
+
+	for _, id := range ids {
+		if strings.TrimSpace(id) == "" {
+			log.Info("empty id in ids list")
+
+			c.render.Text(w, http.StatusBadRequest, "empty id in ids list")
+			return
+		}
+	}
+
+	err := c.usecase.DeleteMovies(ids)
+	if err != nil {
+		log.Error(err)
+
+		c.render.Text(w, http.StatusInternalServerError, "unexpected error deleting movies")
+		return
+	}
 
 	c.render.Text(w, http.StatusNoContent, "")
 }

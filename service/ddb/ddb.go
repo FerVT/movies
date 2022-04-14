@@ -9,26 +9,29 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-type Movies struct {
+type movies struct {
 	tableName string
 	client    ddbClient
 }
 
 type ddbClient interface {
 	DescribeTable(input *dynamodb.DescribeTableInput) (*dynamodb.DescribeTableOutput, error)
+	Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, error)
+	GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
+	BatchWriteItem(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error)
 }
 
-func NewMovies(cfg *config.Config) (*Movies, error) {
+func NewMovies(cfg *config.Config) (*movies, error) {
 	sess, err := session.NewSession(&aws.Config{
-		Region:      aws.String(cfg.AWSRegion),
-		Endpoint:    aws.String(cfg.AWSHost),
+		Region:      &cfg.AWSRegion,
+		Endpoint:    &cfg.AWSHost,
 		Credentials: credentials.NewStaticCredentials(cfg.AWSID, cfg.AWSSecret, cfg.AWSToken),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	moviesDB := &Movies{
+	moviesDB := &movies{
 		tableName: cfg.MoviesTableName,
 		client:    dynamodb.New(sess),
 	}
@@ -41,9 +44,9 @@ func NewMovies(cfg *config.Config) (*Movies, error) {
 	return moviesDB, nil
 }
 
-func (db *Movies) testConnection() error {
+func (db *movies) testConnection() error {
 	req := &dynamodb.DescribeTableInput{
-		TableName: aws.String(db.tableName),
+		TableName: &db.tableName,
 	}
 
 	_, err := db.client.DescribeTable(req)

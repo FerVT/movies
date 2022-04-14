@@ -27,9 +27,9 @@ aws dynamodb --endpoint-url=http://localhost:4566 create-table \
     --table-name movies \
     --region us-east-1 \
     --attribute-definitions \
-        AttributeName=Id,AttributeType=S \
+        AttributeName=id,AttributeType=S \
     --key-schema \
-        AttributeName=Id,KeyType=HASH \
+        AttributeName=id,KeyType=HASH \
     --provisioned-throughput \
         ReadCapacityUnits=10,WriteCapacityUnits=5
 ```
